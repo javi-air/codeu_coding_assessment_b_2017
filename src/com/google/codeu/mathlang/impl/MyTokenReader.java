@@ -17,7 +17,15 @@ package com.google.codeu.mathlang.impl;
 import java.io.IOException;
 
 import com.google.codeu.mathlang.core.tokens.Token;
+import com.google.codeu.mathlang.core.tokens.NumberToken;
+import com.google.codeu.mathlang.core.tokens.StringToken;
+import com.google.codeu.mathlang.core.tokens.SymbolToken;
+import com.google.codeu.mathlang.core.tokens.NameToken;
 import com.google.codeu.mathlang.parsing.TokenReader;
+
+import java.util.Scanner;
+import java.util.regex.Pattern;
+import java.util.HashMap;
 
 // MY TOKEN READER
 //
@@ -27,9 +35,18 @@ import com.google.codeu.mathlang.parsing.TokenReader;
 // work with the test of the system.
 public final class MyTokenReader implements TokenReader {
 
+  private Scanner in;
+  public HashMap<String, String> patterns;
+
   public MyTokenReader(String source) {
     // Your token reader will only be given a string for input. The string will
     // contain the whole source (0 or more lines).
+    this.patterns = new HashMap<String, String>();
+    patterns.put("[1-9].?[1-9]*", "number");
+    patterns.put(".{1}", "symbol");
+    patterns.put("[A-z][.]*", "name");
+    patterns.put("[.]*", "string");
+    this.in = new Scanner(source);
   }
 
   @Override
@@ -40,7 +57,24 @@ public final class MyTokenReader implements TokenReader {
 
     // If for any reason you detect an error in the input, you may throw an IOException
     // which will stop all execution.
-
-    return null;
+    if (!in.hasNext()){
+      return null;
+    }
+    Token result = null;
+    for (String pattern : patterns.keySet()){
+      String input = in.next();
+      if (Pattern.matches(pattern, input)){
+        switch (patterns.get(pattern)) {
+          case "number" :
+            double dInput = Double.parseDouble(input);
+            result = new NumberToken(dInput);
+            break;
+          case "symbol" : result = new SymbolToken(input.charAt(0)); break;
+          case "name" : result = new NameToken(input); break;
+          case "string" : result = new StringToken(input); break;
+        }
+      }
+    }
+    return result;
   }
 }
